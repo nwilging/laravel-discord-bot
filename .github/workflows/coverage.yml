@@ -1,0 +1,29 @@
+name: Coverage
+on:
+  workflow_call:
+
+jobs:
+  run-coverage:
+    name: Run Tests with Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Composer
+        uses: php-actions/composer@v5
+        with:
+          php_extensions: xdebug
+      - name: Run Tests
+        env:
+          XDEBUG_MODE: coverage
+        run: vendor/bin/phpunit
+      - name: Commit Coverage
+        uses: timkrase/phpunit-coverage-badge@v1.2.0
+        with:
+          report: clover.xml
+          report_type: clover
+          coverage_badge_path: ./.github/coverage-badge.svg
+          repo_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          push_badge: true

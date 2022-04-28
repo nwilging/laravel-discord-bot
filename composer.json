@@ -1,0 +1,35 @@
+{
+    "name": "nwilging/laravel-discord-bot",
+    "description": "A robust Discord messaging integration for Laravel",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Nwilging\\LaravelDiscordBot\\": "src/",
+            "Nwilging\\LaravelDiscordBotTests\\": "tests/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Nick Wilging",
+            "email": "nick@epautomotive.org"
+        }
+    ],
+    "require": {
+        "ext-sodium": "*",
+        "php": ">=7.4",
+        "laravel/framework": ">=8",
+        "guzzlehttp/guzzle": "^7.4"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Nwilging\\LaravelDiscordBot\\Providers\\DiscordBotServiceProvider"
+            ]
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5",
+        "mockery/mockery": "^1.5"
+    }
+}
