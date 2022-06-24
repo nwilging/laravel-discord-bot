@@ -153,13 +153,13 @@ for this route, inject the `Nwilging\LaravelDiscordBot\Contracts\Services\Discor
 You will call the `handleInteractionRequest` method on the aforementioned service. Example:
 
 ```phpt
-use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordInteractionServiceInterface;
+use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordInteractionServiceContract;
 
 class MyController extends Controller
 {
-    protected DiscordInteractionServiceInterface $interactionService;
-    
-    public function __construct(DiscordInteractionServiceInterface $interactionService)
+    private $interactionService;
+
+    public function __construct(DiscordInteractionServiceContract $interactionService)
     {
         $this->interactionService = $interactionService;
     }
