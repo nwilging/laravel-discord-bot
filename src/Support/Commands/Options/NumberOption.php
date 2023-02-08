@@ -16,7 +16,6 @@ class NumberOption extends CommandOption
 
     protected ?float $maxValue = null;
 
-
     public function getType(): int
     {
         return static::TYPE_NUMBER;
