@@ -230,3 +230,162 @@ class MessageComponentInteractionListener implements MessageComponentInteraction
 
 Since this is a listener, you do need to implement the `handle` method. It is recommended to combine this type of
 functionality with a listener you plan to use to handle the actual message component interaction event.
+
+## Application Commands
+
+[Discord Application Commands](https://discord.com/developers/docs/interactions/application-commands) are versatile
+commands that your bot can offer to users and receive subsequent interactions from. This package provides both the ability
+to create, update, and delete commands as well as handle interactions from commands.
+
+### Command Builder
+
+There are three types of commands available:
+* [Slash Command](https://discord.com/developers/docs/interactions/application-commands#slash-commands) - `Nwilging\LaravelDiscordBot\Support\Commands\SlashCommand`
+* [Message Command](https://discord.com/developers/docs/interactions/application-commands#message-commands) - `Nwilging\LaravelDiscordBot\Support\Commands\MessageCommand`
+* [User Command](https://discord.com/developers/docs/interactions/application-commands#user-commands) - `Nwilging\LaravelDiscordBot\Support\Commands\UserCommand`
+
+Command types have different options associated with them. For example, slash commands
+may specify "options" which are essentially "arguments".
+
+Options for commands can be found in `Nwilging\LaravelDiscordBot\Support\Commands\Options`.
+
+Here is an example of creating a `SlashCommand`:
+
+```php
+use Nwilging\LaravelDiscordBot\Support\Commands\SlashCommand;
+use Nwilging\LaravelDiscordBot\Support\Commands\Options\ChannelOption;
+
+$command = new SlashCommand('my-command', 'Command description');
+
+$option1 = new ChannelOption('option1', 'description'); // Will allow user to select a channel
+$option2 = new StringOption('option2', 'free text'); // Allows text input
+
+$command->option($option1);
+$command->option($option2);
+```
+
+To create this command on Discord, use the `Nwilging\LaravelDiscordBot\Services\DiscordApplicationCommandService`:
+
+```php
+use Nwilging\LaravelDiscordBot\Support\Commands\SlashCommand;
+use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordApplicationCommandServiceContract;
+
+/** @var DiscordApplicationCommandServiceContract $appCommandService */
+$appCommandService = app(DiscordApplicationCommandServiceContract::class);
+
+$command = new SlashCommand('my-command', 'Command description');
+
+// Creates a "global command" - available to any server your bot is a member of
+$result = $appCommandService->createGlobalCommand($command);
+
+// Creates a "guild command" - available only to the specified server/guild ID
+$result = $appCommandService->createGuildCommand('server id', $command);
+```
+
+To update a command, you may either use the `create` methods or use the `update` methods.
+
+> Because commands have unique names within a type and scope, we treat POST requests for new commands as upserts.
+> That means making a new command with an already-used name for your application will update the existing command.
+> 
+> [Discord Docs](https://discord.com/developers/docs/interactions/application-commands#updating-and-deleting-a-command)
+
+```php
+use Nwilging\LaravelDiscordBot\Support\Commands\SlashCommand;
+use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordApplicationCommandServiceContract;
+
+/** @var DiscordApplicationCommandServiceContract $appCommandService */
+$appCommandService = app(DiscordApplicationCommandServiceContract::class);
+
+$command = new SlashCommand('my-command', 'Command description');
+
+// First create the command
+$created = $appCommandService->createGlobalCommand($command);
+
+// Get the resulting ID
+$id = $created['id'];
+
+// Make a change to the command
+$command->version('updated!');
+
+// First method to update a command:
+$updated = $appCommandService->createGlobalCommand($command);
+
+// Second method to update a command:
+$updated = $appCommandService->updateGlobalCommand($id, $command);
+```
+
+To delete a command you just need the command ID:
+```php
+use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordApplicationCommandServiceContract;
+
+/** @var DiscordApplicationCommandServiceContract $appCommandService */
+$appCommandService = app(DiscordApplicationCommandServiceContract::class);
+
+$commandId = 'commandId';
+$serverId = 'serverId'; // Only necessary for deleting guild commands
+
+// Delete global command
+$appCommandService->deleteGlobalCommand($commandId);
+
+// Delete guild command
+$appCommandService->deleteGuildCommand($serverId, $commandId);;
+```
+
+### Listening for Command Interactions
+
+Extending the application command handler is nearly identical to the [Message Interaction Listener](#listening-for-interaction-events),
+see [extending the interaction handler](#extending-the-message-component-interaction-handler).
+
+Your listeners should listen for `Nwilging\LaravelDiscordBot\Events\ApplicationCommandInteractionEvent`:
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Listeners;
+
+use Nwilging\LaravelDiscordBot\Contracts\Listeners\ApplicationCommandInteractionEventListenerContract;
+use Nwilging\LaravelDiscordBot\Events\ApplicationCommandInteractionEvent;
+use Illuminate\Contracts\Queue\ShouldQueue;
+
+class TestCommandListener implements ShouldQueue, ApplicationCommandInteractionEventListenerContract
+{
+    public function replyContent(ApplicationCommandInteractionEvent $event): ?string
+    {
+        return 'loading';
+    }
+
+    public function behavior(ApplicationCommandInteractionEvent $event): int
+    {
+        return static::REPLY_TO_MESSAGE;
+    }
+
+    public function command(): ?string
+    {
+        return null;
+    }
+
+    public function handle(ApplicationCommandInteractionEvent $event): void
+    {
+        // handle the interaction
+    }
+}
+
+```
+
+The event itself has a few helper methods to quickly get commonly used data from
+the interaction:
+```php
+/** @var \Nwilging\LaravelDiscordBot\Events\ApplicationCommandInteractionEvent $event **/
+$event->getApplicationId(); // The application ID
+$event->getChannelId(); // The channel that the command was run in
+$event->getCommandId(); // The command's unique ID
+$event->getCommandName(); // The name of the command
+$event->getCommandType(); // Returns the command type, an integer
+```
+
+Command types are stored as constants on `Nwilging\LaravelDiscordBot\Support\Command`:
+```php
+public const TYPE_CHAT_INPUT = 1;
+public const TYPE_USER = 2;
+public const TYPE_MESSAGE = 3;
+```
