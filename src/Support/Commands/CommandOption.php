@@ -56,6 +56,48 @@ abstract class CommandOption implements Arrayable
 
     protected abstract function choiceTransformer(OptionChoice $choice): array;
 
+    /**
+     * If the parameter is required or optional
+     *
+     * @see https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure
+     *
+     * @param bool $required
+     * @return $this
+     */
+    public function required(bool $required = true): self
+    {
+        $this->required = $required;
+        return $this;
+    }
+
+    /**
+     * Localization dictionary for the `name` field. Values follow the same restrictions as `name`
+     *
+     * @see https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure
+     *
+     * @param array $localizations
+     * @return $this
+     */
+    public function nameLocalizations(array $localizations): self
+    {
+        $this->nameLocalizations = $localizations;
+        return $this;
+    }
+
+    /**
+     * Localization dictionary for the `description` field. Values follow the same restrictions as `description`
+     *
+     * @see https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure
+     *
+     * @param array $localizations
+     * @return $this
+     */
+    public function descriptionLocalizations(array $localizations): self
+    {
+        $this->descriptionLocalizations = $localizations;
+        return $this;
+    }
+
     public function toArray(): array
     {
         return $this->arrayFilterRecursive([

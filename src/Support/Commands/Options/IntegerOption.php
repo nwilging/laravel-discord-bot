@@ -21,6 +21,34 @@ class IntegerOption extends CommandOption
         return static::TYPE_INTEGER;
     }
 
+    /**
+     * The minimum value permitted
+     *
+     * @see https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure
+     *
+     * @param int $minValue
+     * @return $this
+     */
+    public function minValue(int $minValue): self
+    {
+        $this->minValue = $minValue;
+        return $this;
+    }
+
+    /**
+     * The maximum value permitted
+     *
+     * @see https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure
+     *
+     * @param int $maxValue
+     * @return $this
+     */
+    public function maxValue(int $maxValue): self
+    {
+        $this->maxValue = $maxValue;
+        return $this;
+    }
+
     protected function choiceTransformer(OptionChoice $choice): array
     {
         $array = $choice->toArray();

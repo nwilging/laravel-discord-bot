@@ -4,11 +4,11 @@ declare(strict_types=1);
 namespace Nwilging\LaravelDiscordBotTests\Unit\Support\Commands\Options;
 
 use Nwilging\LaravelDiscordBot\Support\Commands\CommandOption;
-use Nwilging\LaravelDiscordBot\Support\Commands\Options\AttachmentOption;
+use Nwilging\LaravelDiscordBot\Support\Commands\Options\SubCommandGroupOption;
 use Nwilging\LaravelDiscordBotTests\TestCase;
 use Nwilging\LaravelDiscordBotTests\Traits\BasicCommandOptionTests;
 
-class AttachmentOptionTest extends TestCase
+class SubCommandGroupOptionTest extends TestCase
 {
     use BasicCommandOptionTests;
 
@@ -16,8 +16,8 @@ class AttachmentOptionTest extends TestCase
     {
         parent::setUp();
 
-        $this->expectedType = CommandOption::TYPE_ATTACHMENT;
-        $this->option = new AttachmentOption('option', 'desc');
+        $this->expectedType = CommandOption::TYPE_SUB_COMMAND_GROUP;
+        $this->option = new SubCommandGroupOption('option', 'desc');
     }
 
     public function testToArray()
@@ -25,10 +25,10 @@ class AttachmentOptionTest extends TestCase
         $name = 'test-name';
         $description = 'test-desc';
 
-        $option = new AttachmentOption($name, $description);
+        $option = new SubCommandGroupOption($name, $description);
 
         $this->assertEquals([
-            'type' => CommandOption::TYPE_ATTACHMENT,
+            'type' => CommandOption::TYPE_SUB_COMMAND_GROUP,
             'name' => $name,
             'description' => $description,
         ], $option->toArray());
@@ -39,14 +39,14 @@ class AttachmentOptionTest extends TestCase
         $name = 'test-name';
         $description = 'test-desc';
 
-        $option = new AttachmentOption($name, $description);
+        $option = new SubCommandGroupOption($name, $description);
 
         $option->required()
             ->nameLocalizations(['l1'])
             ->descriptionLocalizations(['l2']);
 
         $this->assertEquals([
-            'type' => CommandOption::TYPE_ATTACHMENT,
+            'type' => CommandOption::TYPE_SUB_COMMAND_GROUP,
             'name' => $name,
             'description' => $description,
             'required' => true,

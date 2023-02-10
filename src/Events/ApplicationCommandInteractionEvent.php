@@ -5,19 +5,24 @@ namespace Nwilging\LaravelDiscordBot\Events;
 
 class ApplicationCommandInteractionEvent extends AbstractInteractionEvent
 {
+    protected function getData(): array
+    {
+        return $this->interactionRequest->get('data', []);
+    }
+
     public function getCommandName(): string
     {
-        return $this->interactionRequest->get('data.name');
+        return $this->getData()['name'];
     }
 
     public function getCommandId(): string
     {
-        return $this->interactionRequest->get('data.id');
+        return $this->getData()['id'];
     }
 
     public function getCommandType(): int
     {
-        return (int) $this->interactionRequest->get('data.type');
+        return (int) $this->getData()['type'];
     }
 
     public function getChannelId(): string
