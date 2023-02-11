@@ -11,14 +11,13 @@ use Nwilging\LaravelDiscordBot\Contracts\Listeners\MessageComponentInteractionEv
 use Nwilging\LaravelDiscordBot\Events\MessageComponentInteractionEvent;
 use Nwilging\LaravelDiscordBot\Support\Interactions\DiscordInteractionResponse;
 use Nwilging\LaravelDiscordBot\Support\Interactions\InteractionHandler;
+use Nwilging\LaravelDiscordBot\Support\Traits\HasInteractionListeners;
 
 class MessageComponentInteractionHandler extends InteractionHandler
 {
+    use HasInteractionListeners;
+
     protected string $defaultBehavior;
-
-    protected EventDispatcher $dispatcher;
-
-    protected Application $laravel;
 
     public function __construct(string $defaultBehavior, EventDispatcher $dispatcher, Application $laravel)
     {
@@ -43,55 +42,11 @@ class MessageComponentInteractionHandler extends InteractionHandler
         return new DiscordInteractionResponse(static::RESPONSE_TYPE_DEFERRED_UPDATE_MESSAGE);
     }
 
-    /**
-     * Determines if an incoming interaction should be handled by the user's application or by this package directly.
-     *
-     * If there are any listeners subscribed to the MessageComponentInteractionEvent, those should be dispatched.
-     * Additionally, if there is a listener implementing the contract MessageComponentInteractionEventListenerContract
-     * then that listener should be instantiated and have certain methods called to generate a DiscordInteractionResponse.
-     *
-     * This essentially facilitates overriding the default behavior of responding to interaction requests.
-     *
-     * @return DiscordInteractionResponse|null
-     */
     protected function shouldHandleEventExternally(Request $request): ?DiscordInteractionResponse
     {
-        $listeners = $this->dispatcher->getListeners(MessageComponentInteractionEvent::class);
-        $listenersImplementingInterface = array_values(array_map(function (\Closure $listener) {
-            return $this->makeListenerFromClosure($listener);
-        }, array_filter($listeners, function ($listener): bool {
-            return $this->makeListenerFromClosure($listener) instanceof MessageComponentInteractionEventListenerContract;
-        })));
-
-        $event = new MessageComponentInteractionEvent($request->json());
-        if (!empty($listeners)) {
-            $this->dispatcher->dispatch($event);
-        }
-
-        if (empty($listenersImplementingInterface)) {
-            return null;
-        }
-
-        /** @var MessageComponentInteractionEventListenerContract $listener */
-        $listener = $listenersImplementingInterface[0];
-
-        $replyContent = $listener->replyContent($event);
-        $behavior = $listener->behavior($event);
-
-        $data = null;
-        if (!empty($replyContent)) {
-            $data = [
-                'content' => $replyContent,
-            ];
-        }
-
-        return new DiscordInteractionResponse($behavior, $data);
-    }
-
-    protected function makeListenerFromClosure(\Closure $listenerClosure)
-    {
-        $reflected = new ReflectionClosure($listenerClosure);
-        $attributes = $reflected->getStaticVariables();
-        return $this->laravel->make($attributes['listener']);
+        return $this->generateResponse(
+            new MessageComponentInteractionEvent($request->json()),
+            MessageComponentInteractionEventListenerContract::class,
+        );
     }
 }
