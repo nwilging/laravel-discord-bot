@@ -4,20 +4,14 @@ declare(strict_types=1);
 namespace Nwilging\LaravelDiscordBot\Services;
 
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\ClientException;
-use Mockery\Exception;
 use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordApiServiceContract;
 use Nwilging\LaravelDiscordBot\Support\Component;
 use Nwilging\LaravelDiscordBot\Support\Embed;
-use Psr\Http\Message\ResponseInterface;
+use Nwilging\LaravelDiscordBot\Support\Traits\DiscordApiService as IsApiService;
 
 class DiscordApiService implements DiscordApiServiceContract
 {
-    protected string $token;
-
-    protected string $apiUrl;
-
-    protected ClientInterface $httpClient;
+    use IsApiService;
 
     public function __construct(string $token, string $apiUrl, ClientInterface $httpClient)
     {
@@ -64,17 +58,5 @@ class DiscordApiService implements DiscordApiServiceContract
     protected function buildMessageOptions(array $options): array
     {
         return [];
-    }
-
-    protected function makeRequest(string $method, string $endpoint, array $payload = [], array $queryString = []): ResponseInterface
-    {
-        $url = sprintf('%s/%s', $this->apiUrl, $endpoint);
-
-        return $this->httpClient->request($method, $url, [
-            'headers' => [
-                'Authorization' => sprintf('Bot %s', $this->token),
-            ],
-            'json' => $payload,
-        ]);
     }
 }

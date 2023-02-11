@@ -61,7 +61,7 @@ class MessageComponentInteractionHandlerTest extends TestCase
             ->andReturn([$listener1, $listener2]);
 
         $this->laravel->shouldReceive('make')->once()->with($listener1Class)->andReturn($randomAppListener);
-        $this->laravel->shouldReceive('make')->twice()->with($listener2Class)->andReturn($customResponseListener);
+        $this->laravel->shouldReceive('make')->once()->with($listener2Class)->andReturn($customResponseListener);
 
         $this->eventDispatcher->shouldReceive('dispatch')
             ->once()
