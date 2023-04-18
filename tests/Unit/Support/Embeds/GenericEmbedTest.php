@@ -84,8 +84,8 @@ class GenericEmbedTest extends TestCase
             'thumbnail' => $thumbnail->toArray(),
             'video' => $video->toArray(),
             'fields' => [
-                $field1->toArray(),
-                $field2->toArray(),
+                $field1->toArray()['field'],
+                $field2->toArray()['field'],
             ],
         ], $embed->toArray());
     }

@@ -93,7 +93,7 @@ class GenericEmbed extends Embed
             'provider' => $this->provider?->toArray(),
             'author' => $this->author?->toArray(),
             'fields' => array_map(function (FieldEmbed $field): array {
-                return $field->toArray();
+                return $field->toArray()['field'];
             }, $this->fields),
         ]);
     }
