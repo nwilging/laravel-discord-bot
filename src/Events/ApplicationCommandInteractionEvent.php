@@ -3,8 +3,15 @@ declare(strict_types=1);
 
 namespace Nwilging\LaravelDiscordBot\Events;
 
+use Symfony\Component\HttpFoundation\ParameterBag;
+
 class ApplicationCommandInteractionEvent extends AbstractInteractionEvent
 {
+    public function getRequest(): ParameterBag
+    {
+        return $this->interactionRequest;
+    }
+
     protected function getData(): array
     {
         return $this->interactionRequest->get('data', []);
@@ -33,5 +40,10 @@ class ApplicationCommandInteractionEvent extends AbstractInteractionEvent
     public function getApplicationId(): string
     {
         return $this->interactionRequest->get('application_id');
+    }
+
+    public function getInteractionToken(): string
+    {
+        return $this->interactionRequest->get('token');
     }
 }

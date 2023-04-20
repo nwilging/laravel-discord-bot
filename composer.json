@@ -24,7 +24,8 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Nwilging\\LaravelDiscordBot\\Providers\\DiscordBotServiceProvider"
+                "Nwilging\\LaravelDiscordBot\\Providers\\DiscordBotServiceProvider",
+                "Nwilging\\LaravelDiscordBot\\Providers\\DiscordApplicationCommandServiceProvider"
             ]
         }
     },

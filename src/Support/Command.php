@@ -5,6 +5,7 @@ namespace Nwilging\LaravelDiscordBot\Support;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Nwilging\LaravelDiscordBot\Support\Traits\FiltersRecursive;
+use Nwilging\LaravelDiscordBot\Support\Internal\Commands\Command as InternalCommandClass;
 
 /**
  * Abstract application command
@@ -18,9 +19,9 @@ abstract class Command implements Arrayable
      * The available types of application commands
      * @see https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-types
      */
-    public const TYPE_CHAT_INPUT = 1;
-    public const TYPE_USER = 2;
-    public const TYPE_MESSAGE = 3;
+    public const TYPE_CHAT_INPUT = InternalCommandClass::TYPE_CHAT_INPUT;
+    public const TYPE_USER = InternalCommandClass::TYPE_USER;
+    public const TYPE_MESSAGE = InternalCommandClass::TYPE_MESSAGE;
 
     protected string $name;
 
