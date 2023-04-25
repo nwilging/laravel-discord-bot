@@ -42,6 +42,11 @@ class ApplicationCommandInteractionEvent extends AbstractInteractionEvent
         return $this->interactionRequest->get('application_id');
     }
 
+    public function getInteractionId(): string
+    {
+        return $this->interactionRequest->get('id');
+    }
+
     public function getInteractionToken(): string
     {
         return $this->interactionRequest->get('token');

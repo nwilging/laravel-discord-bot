@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Nwilging\LaravelDiscordBot\Contracts\Support\Internal\Commands;
 
+use Nwilging\LaravelDiscordBot\Events\ApplicationCommandInteractionEvent;
 use Nwilging\LaravelDiscordBot\Support\Command;
 
 interface CommandContract
@@ -16,4 +17,6 @@ interface CommandContract
     public static function type(): int;
 
     public static function migrate(): Command;
+
+    public function setEvent(ApplicationCommandInteractionEvent $event): void;
 }

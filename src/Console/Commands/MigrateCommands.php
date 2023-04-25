@@ -23,18 +23,24 @@ class MigrateCommands extends Command
         LoggerInterface $log
     ): void {
         $types = $commandManager->all();
-        if (empty($types)) {
+        $commands = Arr::flatten($types);
+
+        if (empty($commands)) {
             $this->info('No commands to migrate!');
             return;
         }
 
-        $commands = Arr::flatten($types);
         $this->info(sprintf('Migrating %d commands', count($commands)));
 
         /** @var CommandContract|string $command */
         foreach ($commands as $command) {
             $this->info(sprintf('Migrating: `%s` (%s)', $command::signature(), $command));
             $class = $command::migrate();
+
+            if ($class->getType() !== $command::type()) {
+                $this->error(sprintf('Error when migrating `%s`: Type mismatch', $command::signature()));
+                continue;
+            }
 
             $closure = ($command::guildId() !== null)
                 ? function (DiscordCommand $discordCommand) use ($command, $applicationCommandService): array {

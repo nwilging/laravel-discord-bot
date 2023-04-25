@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Nwilging\LaravelDiscordBot\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordApplicationCommandServiceContract;
 use Nwilging\LaravelDiscordBot\Contracts\Support\Internal\Commands\CommandContract;
 use Nwilging\LaravelDiscordBot\Contracts\Support\Internal\Commands\CommandManagerContract;
@@ -18,7 +19,9 @@ class ListCommands extends Command
 
     public function handle(CommandManagerContract $commandManager): void
     {
-        $commands = $commandManager->all();
+        $types = $commandManager->all();
+        $commands = Arr::flatten($types);
+
         if (empty($commands)) {
             $this->info('No commands exist!');
             return;

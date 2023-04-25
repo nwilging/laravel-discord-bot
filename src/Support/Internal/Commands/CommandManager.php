@@ -35,7 +35,7 @@ class CommandManager implements CommandManagerContract
             throw new \InvalidArgumentException(sprintf('Invalid command: %s', $signature));
         }
 
-        return $this->laravel->make($this->commands[$signature]);
+        return $this->laravel->make($this->commands[$type][$signature]);
     }
 
     public function all(): array

@@ -32,14 +32,7 @@ class MessageComponentInteractionHandler extends InteractionHandler
             return $response;
         }
 
-        switch ($this->defaultBehavior) {
-            case static::BEHAVIOR_LOAD:
-                return new DiscordInteractionResponse(static::RESPONSE_TYPE_DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE);
-            case static::BEHAVIOR_DEFER:
-                return new DiscordInteractionResponse(static::RESPONSE_TYPE_DEFERRED_UPDATE_MESSAGE);
-        }
-
-        return new DiscordInteractionResponse(static::RESPONSE_TYPE_DEFERRED_UPDATE_MESSAGE);
+        return $this->defaultBehavior();
     }
 
     protected function shouldHandleEventExternally(Request $request): ?DiscordInteractionResponse

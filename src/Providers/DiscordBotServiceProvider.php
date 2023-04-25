@@ -14,9 +14,11 @@ use Nwilging\LaravelDiscordBot\Contracts\Channels\DiscordNotificationChannelCont
 use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordApiServiceContract;
 use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordApplicationCommandServiceContract;
 use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordInteractionServiceContract;
+use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordInteractionWebhooksServiceContract;
 use Nwilging\LaravelDiscordBot\Services\DiscordApiService;
 use Nwilging\LaravelDiscordBot\Services\DiscordApplicationCommandService;
 use Nwilging\LaravelDiscordBot\Services\DiscordInteractionService;
+use Nwilging\LaravelDiscordBot\Services\DiscordInteractionWebhooksService;
 use Nwilging\LaravelDiscordBot\Support\Interactions\Handlers\ApplicationCommandHandler;
 use Nwilging\LaravelDiscordBot\Support\Interactions\Handlers\MessageComponentInteractionHandler;
 
@@ -76,6 +78,20 @@ class DiscordBotServiceProvider extends ServiceProvider
         });
 
         $this->app->when(DiscordApplicationCommandService::class)->needs('$applicationId')->give(function (): string {
+            return $this->app->make(Config::class)->get('discord.application_id');
+        });
+
+        $this->app->bind(DiscordInteractionWebhooksServiceContract::class, DiscordInteractionWebhooksService::class);
+
+        $this->app->when(DiscordInteractionWebhooksService::class)->needs('$token')->give(function (): string {
+            return $this->app->make(Config::class)->get('discord.token');
+        });
+
+        $this->app->when(DiscordInteractionWebhooksService::class)->needs('$apiUrl')->give(function (): string {
+            return $this->app->make(Config::class)->get('discord.api_url');
+        });
+
+        $this->app->when(DiscordInteractionWebhooksService::class)->needs('$applicationId')->give(function (): string {
             return $this->app->make(Config::class)->get('discord.application_id');
         });
     }
