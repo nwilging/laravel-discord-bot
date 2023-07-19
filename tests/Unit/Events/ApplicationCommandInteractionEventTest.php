@@ -25,6 +25,8 @@ class ApplicationCommandInteractionEventTest extends TestCase
         $channelId = 'test-channel-id';
         $applicationId = 'test-app-id';
         $type = 42;
+        $interactionId = 'test-interaction-id';
+        $interactionToken = 'test-interaction-token';
 
         $data = [
             'name' => $commandName,
@@ -35,6 +37,8 @@ class ApplicationCommandInteractionEventTest extends TestCase
         $parameterBag = new ParameterBag([
             'application_id' => $applicationId,
             'channel_id' => $channelId,
+            'id' => $interactionId,
+            'token' => $interactionToken,
             'data' => $data,
         ]);
 
@@ -45,5 +49,7 @@ class ApplicationCommandInteractionEventTest extends TestCase
         $this->assertSame($channelId, $event->getChannelId());
         $this->assertSame($applicationId, $event->getApplicationId());
         $this->assertSame($type, $event->getCommandType());
+        $this->assertSame($interactionId, $event->getInteractionId());
+        $this->assertSame($interactionToken, $event->getInteractionToken());
     }
 }

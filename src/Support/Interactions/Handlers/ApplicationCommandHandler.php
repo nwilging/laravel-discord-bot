@@ -79,6 +79,6 @@ class ApplicationCommandHandler extends InteractionHandler
             }
         }
 
-        return new DiscordInteractionResponse(static::RESPONSE_TYPE_DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE);
+        return $this->defaultBehavior();
     }
 }
