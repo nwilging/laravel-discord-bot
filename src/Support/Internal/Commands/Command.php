@@ -6,11 +6,12 @@ namespace Nwilging\LaravelDiscordBot\Support\Internal\Commands;
 use Illuminate\Http\Request;
 use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordApiServiceContract;
 use Nwilging\LaravelDiscordBot\Contracts\Services\DiscordInteractionWebhooksServiceContract;
+use Nwilging\LaravelDiscordBot\Contracts\Support\Internal\Commands\CommandContract;
 use Nwilging\LaravelDiscordBot\Events\ApplicationCommandInteractionEvent;
 use Nwilging\LaravelDiscordBot\Models\WebhookMessage;
 use Nwilging\LaravelDiscordBot\Support\Interactions\DiscordInteractionResponse;
 
-abstract class Command
+abstract class Command implements CommandContract
 {
     /**
      * The available types of application commands
@@ -34,6 +35,8 @@ abstract class Command
         $this->discordApiService = $discordApiService;
         $this->discordInteractionWebhooksService = $discordInteractionWebhooksService;
     }
+
+    public abstract function handle(): void;
 
     /**
      * Sets the event context for this command. This should only be called by the CommandManager, calling this method

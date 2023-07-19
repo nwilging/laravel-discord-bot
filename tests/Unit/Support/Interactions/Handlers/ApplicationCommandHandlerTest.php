@@ -8,18 +8,24 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Http\Request;
 use Mockery\MockInterface;
-use Nwilging\LaravelDiscordBot\Contracts\Listeners\ApplicationCommandInteractionEventListenerContract;
+use Nwilging\LaravelDiscordBot\Contracts\Support\Internal\Commands\CommandManagerContract;
 use Nwilging\LaravelDiscordBot\Events\ApplicationCommandInteractionEvent;
+use Nwilging\LaravelDiscordBot\Jobs\ProcessApplicationCommandJob;
 use Nwilging\LaravelDiscordBot\Support\Interactions\Handlers\ApplicationCommandHandler;
-use Nwilging\LaravelDiscordBot\Support\Interactions\InteractionHandler;
+use Nwilging\LaravelDiscordBot\Support\Internal\Commands\Command;
 use Nwilging\LaravelDiscordBotTests\TestCase;
 use Symfony\Component\HttpFoundation\ParameterBag;
+use Illuminate\Contracts\Bus\Dispatcher as JobDispatcher;
 
 class ApplicationCommandHandlerTest extends TestCase
 {
     protected string $defaultBehavior = 'defer';
 
+    protected CommandManagerContract $commandManager;
+
     protected MockInterface $eventDispatcher;
+
+    protected MockInterface $jobDispatcher;
 
     protected MockInterface $laravel;
 
@@ -30,164 +36,88 @@ class ApplicationCommandHandlerTest extends TestCase
         parent::setUp();
 
         $this->eventDispatcher = \Mockery::mock(Dispatcher::class);
+        $this->commandManager = \Mockery::mock(CommandManagerContract::class);
+        $this->jobDispatcher = \Mockery::mock(JobDispatcher::class);
         $this->laravel = \Mockery::mock(Application::class);
 
-        $this->handler = new ApplicationCommandHandler($this->defaultBehavior, $this->eventDispatcher, $this->laravel);
+        $this->handler = new ApplicationCommandHandler(
+            $this->defaultBehavior,
+            $this->commandManager,
+            $this->eventDispatcher,
+            $this->jobDispatcher,
+            $this->laravel
+        );
     }
 
-    public function testHandleDispatchesToApplicationListenersAndReturnsCustomResponse()
+    public function testHandleCallsCommandHandler()
     {
-        $parameterBag = \Mockery::mock(ParameterBag::class);
-
-        $request = \Mockery::mock(Request::class);
-        $request->shouldReceive('json')->andReturn($parameterBag);
-
-        $listener1Class = 'test-listener-1';
-        $listener2Class = 'test-listener-2';
-
-        $listener1 = function () {
-            static $listener = 'test-listener-1';
-        };
-
-        $listener2 = function () {
-            static $listener = 'test-listener-2';
-        };
-
-        $randomAppListener = \Mockery::mock(ShouldQueue::class);
-        $customResponseListener = \Mockery::mock(ApplicationCommandInteractionEventListenerContract::class);
-
-        $this->eventDispatcher->shouldReceive('getListeners')
-            ->once()
-            ->with(ApplicationCommandInteractionEvent::class)
-            ->andReturn([$listener1, $listener2]);
-
-        $this->laravel->shouldReceive('make')->once()->with($listener1Class)->andReturn($randomAppListener);
-        $this->laravel->shouldReceive('make')->once()->with($listener2Class)->andReturn($customResponseListener);
-
-        $this->eventDispatcher->shouldReceive('dispatch')
-            ->once()
-            ->with(\Mockery::on(function (ApplicationCommandInteractionEvent $event) use ($parameterBag): bool {
-                $this->assertSame($parameterBag, $event->getInteractionRequest());
-                return true;
-            }));
-
-        $customResponseListener->shouldReceive('replyContent')->once()->andReturn('custom reply');
-        $customResponseListener->shouldReceive('behavior')->once()->andReturn(ApplicationCommandInteractionEventListenerContract::REPLY_TO_MESSAGE);
-
-        $result = $this->handler->handle($request);
-        $this->assertEquals(200, $result->getStatus());
-        $this->assertEquals([
-            'type' => ApplicationCommandInteractionEventListenerContract::REPLY_TO_MESSAGE,
+        $parameterBag = new ParameterBag([
             'data' => [
-                'content' => 'custom reply',
+                'type' => Command::TYPE_CHAT_INPUT,
+                'name' => 'test-command',
             ],
-        ], $result->toArray());
-    }
+        ]);
 
-    public function testHandleDispatchesToListenersAndReturnsDefaultBehaviorResponse()
-    {
-        $parameterBag = \Mockery::mock(ParameterBag::class);
+        $command = \Mockery::mock(Command::class);
+        $command->shouldReceive('setEvent')
+            ->once()
+            ->with(\Mockery::type(ApplicationCommandInteractionEvent::class));
+
+        $this->commandManager->shouldReceive('get')
+            ->once()
+            ->with(Command::TYPE_CHAT_INPUT, 'test-command')
+            ->andReturn($command);
 
         $request = \Mockery::mock(Request::class);
         $request->shouldReceive('json')->andReturn($parameterBag);
 
-        $listener1Class = 'test-listener-1';
-
-        $listener1 = function () {
-            static $listener = 'test-listener-1';
-        };
-
-        $randomAppListener = \Mockery::mock(ShouldQueue::class);
-
-        $this->eventDispatcher->shouldReceive('getListeners')
+        $this->laravel->shouldReceive('call')
             ->once()
-            ->with(ApplicationCommandInteractionEvent::class)
-            ->andReturn([$listener1]);
+            ->with([$command, 'handle']);
 
-        $this->laravel->shouldReceive('make')->once()->with($listener1Class)->andReturn($randomAppListener);
-        $this->eventDispatcher->shouldReceive('dispatch')
-            ->once()
-            ->with(\Mockery::on(function (ApplicationCommandInteractionEvent $event) use ($parameterBag): bool {
-                $this->assertSame($parameterBag, $event->getInteractionRequest());
-                return true;
-            }));
-
-        $result = $this->handler->handle($request);
-        $this->assertEquals(200, $result->getStatus());
-        $this->assertEquals([
-            'type' => ApplicationCommandInteractionEventListenerContract::DEFER_WHILE_HANDLING,
-        ], $result->toArray());
+        $this->handler->handle($request);
     }
 
-    public function testHandleDispatchesToListenersAndReturnsDefaultBehaviorResponseLoad()
+    public function testHandleQueuesCommandHandler()
     {
-        $parameterBag = \Mockery::mock(ParameterBag::class);
+        $parameterBag = new ParameterBag([
+            'data' => [
+                'type' => Command::TYPE_CHAT_INPUT,
+                'name' => 'test-command',
+            ],
+        ]);
+
+        $command = \Mockery::mock(Command::class, ShouldQueue::class);
+        $this->commandManager->shouldReceive('get')
+            ->once()
+            ->with(Command::TYPE_CHAT_INPUT, 'test-command')
+            ->andReturn($command);
 
         $request = \Mockery::mock(Request::class);
         $request->shouldReceive('json')->andReturn($parameterBag);
 
-        $listener1Class = 'test-listener-1';
-
-        $listener1 = function () {
-            static $listener = 'test-listener-1';
-        };
-
-        $randomAppListener = \Mockery::mock(ShouldQueue::class);
-
-        $this->eventDispatcher->shouldReceive('getListeners')
+        $this->jobDispatcher->shouldReceive('dispatch')
             ->once()
-            ->with(ApplicationCommandInteractionEvent::class)
-            ->andReturn([$listener1]);
+            ->with(\Mockery::on(function (ProcessApplicationCommandJob $job): bool {
+                $reflected = new \ReflectionClass($job);
 
-        $this->laravel->shouldReceive('make')->once()->with($listener1Class)->andReturn($randomAppListener);
-        $this->eventDispatcher->shouldReceive('dispatch')
-            ->once()
-            ->with(\Mockery::on(function (ApplicationCommandInteractionEvent $event) use ($parameterBag): bool {
-                $this->assertSame($parameterBag, $event->getInteractionRequest());
+                $typeProp = $reflected->getProperty('type');
+                $signatureProp = $reflected->getProperty('signature');
+                $eventProp = $reflected->getProperty('event');
+
+                $typeProp->setAccessible(true);
+                $signatureProp->setAccessible(true);
+                $eventProp->setAccessible(true);
+
+                $this->assertEquals(Command::TYPE_CHAT_INPUT, $typeProp->getValue($job));
+                $this->assertEquals('test-command', $signatureProp->getValue($job));
+                $this->assertInstanceOf(ApplicationCommandInteractionEvent::class, $eventProp->getValue($job));
+
                 return true;
             }));
 
-        $handler = new ApplicationCommandHandler('load', $this->eventDispatcher, $this->laravel);
-        $result = $handler->handle($request);
-        $this->assertEquals(200, $result->getStatus());
-        $this->assertEquals([
-            'type' => ApplicationCommandInteractionEventListenerContract::LOAD_WHILE_HANDLING,
-        ], $result->toArray());
-    }
+        $this->laravel->shouldNotReceive('call');
 
-    public function testHandleDispatchesToListenersAndReturnsDeferWhenNoValidDefaultBehavior()
-    {
-        $parameterBag = \Mockery::mock(ParameterBag::class);
-
-        $request = \Mockery::mock(Request::class);
-        $request->shouldReceive('json')->andReturn($parameterBag);
-
-        $listener1Class = 'test-listener-1';
-
-        $listener1 = function () {
-            static $listener = 'test-listener-1';
-        };
-
-        $randomAppListener = \Mockery::mock(ShouldQueue::class);
-
-        $this->eventDispatcher->shouldReceive('getListeners')
-            ->once()
-            ->with(ApplicationCommandInteractionEvent::class)
-            ->andReturn([$listener1]);
-
-        $this->laravel->shouldReceive('make')->once()->with($listener1Class)->andReturn($randomAppListener);
-        $this->eventDispatcher->shouldReceive('dispatch')
-            ->once()
-            ->with(\Mockery::on(function (ApplicationCommandInteractionEvent $event) use ($parameterBag): bool {
-                $this->assertSame($parameterBag, $event->getInteractionRequest());
-                return true;
-            }));
-
-        $handler = new ApplicationCommandHandler('invalid', $this->eventDispatcher, $this->laravel);
-        $result = $handler->handle($request);
-        $this->assertEquals(200, $result->getStatus());
-        $this->assertEquals([
-            'type' => ApplicationCommandInteractionEventListenerContract::DEFER_WHILE_HANDLING,
-        ], $result->toArray());
+        $this->handler->handle($request);
     }
 }
